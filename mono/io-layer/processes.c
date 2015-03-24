@@ -90,7 +90,6 @@
 #include <mono/utils/mono-membar.h>
 #include <mono/utils/mono-mutex.h>
 #include <mono/utils/mono-signal-handler.h>
-#include <mono/utils/mono-proclib.h>
 
 /* The process' environment strings */
 #if defined(__APPLE__) && !defined (__arm__) && !defined (__aarch64__)
@@ -115,7 +114,7 @@ static guint32 process_wait (gpointer handle, guint32 timeout, gboolean alertabl
 static void process_close (gpointer handle, gpointer data);
 static gboolean is_pid_valid (pid_t pid);
 
-#if !(defined(PLATFORM_MACOSX) || defined(__OpenBSD__) || defined(__HAIKU__))
+#if !defined(__OpenBSD__)
 static FILE *
 open_process_map (int pid, const char *mode);
 #endif
@@ -839,6 +838,7 @@ gboolean CreateProcess (const gunichar2 *appname, const gunichar2 *cmdline,
 	} else {
 		if (!is_executable (prog)) {
 			DEBUG ("%s: Executable permisson not set on %s", __func__, prog);
+			g_free (prog);
 			SetLastError (ERROR_ACCESS_DENIED);
 			goto free_strings;
 		}
@@ -1309,19 +1309,11 @@ GetProcessTimes (gpointer process, WapiFileTime *create_time,
 		/* Not sure if w32 allows NULLs here or not */
 		return FALSE;
 	
-	if (WAPI_IS_PSEUDO_PROCESS_HANDLE (process)) {
-		gpointer pid = GINT_TO_POINTER (WAPI_HANDLE_TO_PID(process));
-		gint64 start_ticks, user_ticks, kernel_ticks;
-
-		mono_process_get_times (pid, &start_ticks, &user_ticks, &kernel_ticks);
-
-		_wapi_guint64_to_filetime (start_ticks, create_time);
-		_wapi_guint64_to_filetime (user_ticks, kernel_time);
-		_wapi_guint64_to_filetime (kernel_ticks, user_time);
-
-		return TRUE;
-	}
-
+	if (WAPI_IS_PSEUDO_PROCESS_HANDLE (process))
+		/* This is a pseudo handle, so just fail for now
+		 */
+		return FALSE;
+	
 	process_handle = lookup_process_handle (process);
 	if (!process_handle) {
 		DEBUG ("%s: Can't find process %p", __func__, process);
@@ -1701,7 +1693,7 @@ static gboolean match_procname_to_modulename (char *procname, char *modulename)
 	return result;
 }
 
-#if !(defined(PLATFORM_MACOSX) || defined(__OpenBSD__) || defined(__HAIKU__))
+#if !defined(__OpenBSD__)
 static FILE *
 open_process_map (int pid, const char *mode)
 {
@@ -2481,16 +2473,17 @@ mono_processes_cleanup (void)
 			 * This code can run parallel with the sigchld handler, but the
 			 * modifications it makes are safe.
 			 */
-			if (mp == mono_processes)
+			if (mp == mono_processes) {
 				mono_processes = mp->next;
-			else
-				prev->next = mp->next;
-			finished = g_slist_prepend (finished, mp);
-
-			mp = mp->next;
-		} else {
+			} else {
+				if (mp == mono_processes) {
+					mono_processes = mp->next;
+				} else {
+					prev->next = mp->next;
+				}
+			}
 			prev = mp;
-			mp = mp->next;
+			finished = g_slist_prepend (finished, mp);
 		}
 	}
 
@@ -2508,7 +2501,7 @@ mono_processes_cleanup (void)
 	}
 	g_slist_free (finished);
 
-	mono_mutex_unlock (&mono_processes_mutex);
+	mono_mutex_lock (&mono_processes_mutex);
 
 	DEBUG ("%s done", __func__);
 
@@ -2590,7 +2583,7 @@ static guint32
 process_wait (gpointer handle, guint32 timeout, gboolean alertable)
 {
 	WapiHandle_process *process_handle;
-	pid_t pid G_GNUC_UNUSED, ret;
+	pid_t pid, ret;
 	int status;
 	guint32 start;
 	guint32 now;
