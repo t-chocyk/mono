@@ -3965,6 +3965,9 @@ namespace Mono.CSharp
 						if (pos == value_builder.Length)
 							Array.Resize (ref value_builder, pos * 2);
 
+						if (pos == value_builder.Length)
+							Array.Resize (ref value_builder, pos * 2);
+
 						value_builder [pos++] = (char)ch;
 						ch = surrogate;
 					}
@@ -4032,6 +4035,9 @@ namespace Mono.CSharp
 				}
 
 				++col;
+				if (pos == value_builder.Length)
+					Array.Resize (ref value_builder, pos * 2);
+
 				value_builder[pos++] = (char) ch;
 			}
 		}
