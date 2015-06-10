@@ -137,6 +137,8 @@ net_4_5_dirs := \
 	Mono.CSharp			\
 	System.Net			\
 	System.Json		\
+	System.Numerics		\
+	System.Numerics.Vectors \
 	Microsoft.CSharp	\
 	System.Xaml \
 	WindowsBase \
