@@ -151,6 +151,7 @@ net_4_5_dirs := \
 	System.Net			\
 	System.Json		\
 	System.Numerics		\
+	System.Numerics.Vectors \
 	Microsoft.CSharp	\
 	System.Windows.Forms.DataVisualization	\
 	System.Xaml \
