@@ -5918,6 +5918,11 @@ mono_class_create_from_typedef (MonoImage *image, guint32 type_token, MonoError 
 			class->simd_type = !strcmp (name + 6, "2d") || !strcmp (name + 6, "2ul") || !strcmp (name + 6, "2l") || !strcmp (name + 6, "4f") || !strcmp (name + 6, "4ui") || !strcmp (name + 6, "4i") || !strcmp (name + 6, "8s") || !strcmp (name + 6, "8us") || !strcmp (name + 6, "16b") || !strcmp (name + 6, "16sb");
 	}
 
+	if (class->image->assembly_name && !strcmp(class->image->assembly_name, "System.Numerics.Vectors")
+	{
+		class->simd_type = 1;
+	}
+
 	mono_loader_unlock ();
 
 	mono_profiler_class_loaded (class, MONO_PROFILE_OK);
