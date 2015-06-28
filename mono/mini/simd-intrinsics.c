@@ -14,6 +14,7 @@
 #include "ir-emit.h"
 #include "mono/utils/bsearch.h"
 #include <mono/metadata/abi-details.h>
+#include <mono/utils/mono-logger-internal.h>
 
 /*
 General notes on SIMD intrinsics
@@ -1638,12 +1639,21 @@ MonoInst*
 mono_emit_simd_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig, MonoInst **args)
 {
 	const char *class_name;
-
-	if (strcmp ("Mono.Simd", cmethod->klass->image->assembly->aname.name) ||
-	    strcmp ("Mono.Simd", cmethod->klass->name_space))
+    
+	if ((strcmp ("Mono.Simd", cmethod->klass->image->assembly->aname.name) ||
+        strcmp ("Mono.Simd", cmethod->klass->name_space)) &&
+        strcmp ("System.Numerics.Vectors", cmethod->klass->image->assembly->aname.name))
 		return NULL;
-
+        
 	class_name = cmethod->klass->name;
+    
+    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, "SIMD assembly");
+    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, cmethod->klass->image->assembly->aname.name);
+    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, "SIMD class name:");
+    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, class_name);
+    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, "SIMD method name:");
+    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, cmethod->name);
+    
 	if (!strcmp ("SimdRuntime", class_name))
 		return emit_simd_runtime_intrinsics (cfg, cmethod, fsig, args);
 
