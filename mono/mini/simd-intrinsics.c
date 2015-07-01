@@ -64,9 +64,9 @@ without a OP_LDADDR.
 
 #ifdef MONO_ARCH_SIMD_INTRINSICS
 
-//#define IS_DEBUG_ON(cfg) (0)
+#define IS_DEBUG_ON(cfg) (1)
 
-#define IS_DEBUG_ON(cfg) ((cfg)->verbose_level >= 3)
+//#define IS_DEBUG_ON(cfg) ((cfg)->verbose_level >= 3)
 #define DEBUG(a) do { if (IS_DEBUG_ON(cfg)) { a; } } while (0)
 enum {
 	SIMD_EMIT_BINARY,
@@ -128,6 +128,13 @@ typedef struct {
 	guint8 simd_emit_mode : 4;
 	guint8 flags : 4;
 } SimdIntrinsc;
+
+static const SimdIntrinsc vector2_intrinsics[] = {
+	{ SN_op_Addition, OP_ADDPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Equality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
+	{ SN_op_Inequality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
+};
 
 static const SimdIntrinsc vector4f_intrinsics[] = {
 	{ SN_ctor, OP_EXPAND_R4, SIMD_VERSION_SSE1, SIMD_EMIT_CTOR },
@@ -1475,6 +1482,7 @@ static MonoInst*
 emit_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig, MonoInst **args, const SimdIntrinsc *intrinsics, guint32 size)
 {
 	const SimdIntrinsc * result = mono_binary_search (cmethod->name, intrinsics, size, sizeof (SimdIntrinsc), &simd_intrinsic_compare_by_name);
+    
 	if (!result) {
 		DEBUG (printf ("function doesn't have a simd intrinsic %s::%s/%d\n", cmethod->klass->name, cmethod->name, fsig->param_count));
 		return NULL;
@@ -1500,6 +1508,8 @@ emit_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsi
 		}
 		return NULL;
 	}
+    
+    printf("Emiting opcode %d", result->opcode);    
 
 	switch (result->simd_emit_mode) {
 	case SIMD_EMIT_BINARY:
@@ -1638,13 +1648,6 @@ mono_emit_simd_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSign
         
 	class_name = cmethod->klass->name;
     
-    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, "SIMD assembly");
-    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, cmethod->klass->image->assembly->aname.name);
-    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, "SIMD class name:");
-    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, class_name);
-    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, "SIMD method name:");
-    mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_ALL, cmethod->name);
-    
 	if (!strcmp ("SimdRuntime", class_name))
 		return emit_simd_runtime_intrinsics (cfg, cmethod, fsig, args);
 
@@ -1679,6 +1682,9 @@ mono_emit_simd_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSign
 		return emit_intrinsics (cfg, cmethod, fsig, args, vector16b_intrinsics, sizeof (vector16b_intrinsics) / sizeof (SimdIntrinsc));
 	if (!strcmp ("Vector16sb", class_name))
 		return emit_intrinsics (cfg, cmethod, fsig, args, vector16sb_intrinsics, sizeof (vector16sb_intrinsics) / sizeof (SimdIntrinsc));
+        
+	if (!strcmp ("Vector2", class_name))
+		return emit_intrinsics (cfg, cmethod, fsig, args, vector2_intrinsics, sizeof (vector2_intrinsics) / sizeof (SimdIntrinsc));
 
 	return NULL;
 }
