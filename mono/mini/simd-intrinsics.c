@@ -139,9 +139,45 @@ typedef struct {
 } SimdIntrinsc;
 
 static const SimdIntrinsc vector2_intrinsics[] = {
+	{ SN_op_Addition, OP_ADDSS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Subtraction, OP_SUBSS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Division, OP_DIVSS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Equality, OP_COMPSS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
+	{ SN_op_Inequality, OP_COMPSS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
+	{ SN_get_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
+	{ SN_get_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
+	{ SN_set_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER },
+	{ SN_set_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER },
+};
+
+static const SimdIntrinsc vector3_intrinsics[] = {
 	{ SN_op_Addition, OP_ADDPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Division, OP_DIVPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Equality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
 	{ SN_op_Inequality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
+	{ SN_get_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
+	{ SN_get_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
+	{ SN_get_Z, 2, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
+	{ SN_set_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER },
+	{ SN_set_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER },
+	{ SN_set_Z, 2, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER }
+};
+
+static const SimdIntrinsc vector4_intrinsics[] = {
+	{ SN_op_Addition, OP_ADDPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Division, OP_DIVPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Equality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
+	{ SN_op_Inequality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
+	{ SN_get_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
+	{ SN_get_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
+	{ SN_get_Z, 2, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
+	{ SN_get_W, 3, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
+	{ SN_set_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER },
+	{ SN_set_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER },
+	{ SN_set_Z, 2, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER },
+	{ SN_set_W, 3, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER }
 };
 
 static const SimdIntrinsc vector4f_intrinsics[] = {
@@ -1672,7 +1708,8 @@ mono_emit_simd_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSign
 	cfg->uses_simd_intrinsics = 1;
 	if (!strcmp ("Vector2d", class_name))
 		return emit_intrinsics (cfg, cmethod, fsig, args, vector2d_intrinsics, sizeof (vector2d_intrinsics) / sizeof (SimdIntrinsc));
-	if (!strcmp ("Vector4f", class_name))
+	if (!strcmp ("Vector4f", class_name) ||
+        !strcmp ("Vector4", class_name) )
 		return emit_intrinsics (cfg, cmethod, fsig, args, vector4f_intrinsics, sizeof (vector4f_intrinsics) / sizeof (SimdIntrinsc));
 	if (!strcmp ("Vector2ul", class_name))
 		return emit_intrinsics (cfg, cmethod, fsig, args, vector2ul_intrinsics, sizeof (vector2ul_intrinsics) / sizeof (SimdIntrinsc));
@@ -1690,10 +1727,12 @@ mono_emit_simd_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSign
 		return emit_intrinsics (cfg, cmethod, fsig, args, vector16b_intrinsics, sizeof (vector16b_intrinsics) / sizeof (SimdIntrinsc));
 	if (!strcmp ("Vector16sb", class_name))
 		return emit_intrinsics (cfg, cmethod, fsig, args, vector16sb_intrinsics, sizeof (vector16sb_intrinsics) / sizeof (SimdIntrinsc));
-        
 	if (!strcmp ("Vector2", class_name))
 		return emit_intrinsics (cfg, cmethod, fsig, args, vector2_intrinsics, sizeof (vector2_intrinsics) / sizeof (SimdIntrinsc));
-
+	if (!strcmp ("Vector3", class_name))
+		return emit_intrinsics (cfg, cmethod, fsig, args, vector3_intrinsics, sizeof (vector3_intrinsics) / sizeof (SimdIntrinsc));
+    if (!strcmp ("Vector4", class_name))
+		return emit_intrinsics (cfg, cmethod, fsig, args, vector4_intrinsics, sizeof (vector4_intrinsics) / sizeof (SimdIntrinsc));
 	return NULL;
 }
 
