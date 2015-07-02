@@ -73,9 +73,9 @@ mono_simd_intrinsics_init (void)
 
 #else
 
-#define IS_DEBUG_ON(cfg) (1)
+//#define IS_DEBUG_ON(cfg) (1)
 
-//#define IS_DEBUG_ON(cfg) ((cfg)->verbose_level >= 3)
+#define IS_DEBUG_ON(cfg) ((cfg)->verbose_level >= 3)
 #define DEBUG(a) do { if (IS_DEBUG_ON(cfg)) { a; } } while (0)
 enum {
 	SIMD_EMIT_BINARY,
