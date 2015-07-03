@@ -64,9 +64,9 @@ without a OP_LDADDR.
 
 #ifdef MONO_ARCH_SIMD_INTRINSICS
 
-//#define IS_DEBUG_ON(cfg) (1)
+#define IS_DEBUG_ON(cfg) (1)
 
-#define IS_DEBUG_ON(cfg) ((cfg)->verbose_level >= 3)
+//#define IS_DEBUG_ON(cfg) ((cfg)->verbose_level >= 3)
 #define DEBUG(a) do { if (IS_DEBUG_ON(cfg)) { a; } } while (0)
 enum {
 	SIMD_EMIT_BINARY,
@@ -131,22 +131,24 @@ typedef struct {
 
 static const SimdIntrinsc vector2_intrinsics[] = {
 	{ SN_op_Addition, OP_ADDPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
-	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_op_Division, OP_DIVPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_op_Equality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
 	{ SN_op_Inequality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
+	{ SN_op_Multiply, OP_MULPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_get_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
 	{ SN_get_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
 	{ SN_set_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER },
-	{ SN_set_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER },
+	{ SN_set_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_SETTER }
 };
 
 static const SimdIntrinsc vector3_intrinsics[] = {
 	{ SN_op_Addition, OP_ADDPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
-	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_op_Division, OP_DIVPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_op_Equality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
 	{ SN_op_Inequality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
+	{ SN_op_Multiply, OP_MULPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_get_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
 	{ SN_get_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
 	{ SN_get_Z, 2, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
@@ -157,10 +159,11 @@ static const SimdIntrinsc vector3_intrinsics[] = {
 
 static const SimdIntrinsc vector4_intrinsics[] = {
 	{ SN_op_Addition, OP_ADDPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
-	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_op_Division, OP_DIVPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_op_Equality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
 	{ SN_op_Inequality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
+	{ SN_op_Multiply, OP_MULPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_get_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
 	{ SN_get_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
 	{ SN_get_Z, 2, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
