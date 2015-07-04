@@ -3,9 +3,9 @@
 
 using System.Globalization;
 using System.Runtime.InteropServices;
-using Xunit;
+using NUnit.Framework;
 
-namespace System.Numerics.Tests
+namespace MonoTests.System.Numerics
 {
     public class Vector2Tests
     {
