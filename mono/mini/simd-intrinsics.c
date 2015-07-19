@@ -13,6 +13,7 @@
 #include "mini.h"
 #include "ir-emit.h"
 #include "mono/utils/bsearch.h"
+#include "mono/metadata/blob.h"
 #include <mono/metadata/abi-details.h>
 #include <mono/utils/mono-logger-internal.h>
 
@@ -122,11 +123,20 @@ enum {
 #endif
 
 typedef struct {
+	 guint16 name;
+	 const char *method_name;
+     const int number_of_parameters;
+     MonoMethodSignature *method_signature;
+	 MonoTypeEnum parameters [99];
+} SimdIntrinscKey;
+
+typedef struct {
 	guint16 name;
 	guint16 opcode;
 	guint8 simd_version_flags;
 	guint8 simd_emit_mode : 4;
 	guint8 flags : 4;
+	SimdIntrinscKey *key;
 } SimdIntrinsc;
 
 static const SimdIntrinsc vector2_intrinsics[] = {
@@ -136,7 +146,8 @@ static const SimdIntrinsc vector2_intrinsics[] = {
 	{ SN_op_Division, OP_DIVPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_op_Equality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
 	{ SN_op_Inequality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
-	{ SN_op_Multiply, OP_MULPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+    { SN_op_Multiply, OP_MULSS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY, .key = &(SimdIntrinscKey){ .name = SN_op_Multiply, .parameters = { (MonoTypeEnum)0x11, (MonoTypeEnum)0xc }, .number_of_parameters = 2 } },
+	{ SN_op_Multiply, OP_MULPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY, .key = &(SimdIntrinscKey){ .name = SN_op_Multiply, .parameters = { (MonoTypeEnum)0x11, (MonoTypeEnum)0x11 }, .number_of_parameters = 2 } },
 	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_get_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
 	{ SN_get_Y, 1, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
@@ -644,6 +655,44 @@ static int
 simd_intrinsic_compare_by_name (const void *key, const void *value)
 {
 	return strcmp (key, method_name (((SimdIntrinsc *)value)->name));
+}
+
+static int
+simd_intrinsic_compare_by_name_and_signature (const void *key, const void *value)
+{
+    int i;
+    SimdIntrinscKey *key_pointer = (SimdIntrinscKey*)key;
+    
+    if(!((SimdIntrinsc*)value)->key){
+        return simd_intrinsic_compare_by_name(key_pointer->method_name, &((SimdIntrinsc*)value)->name);
+    }
+    
+    SimdIntrinscKey *value_pointer = (SimdIntrinscKey*)(((SimdIntrinsc*)value)->key);
+    int compare_by_name_result = simd_intrinsic_compare_by_name(key_pointer->method_name, &value_pointer->name);
+    ;
+    
+    if(!key_pointer->method_signature || compare_by_name_result != 0) {
+        return compare_by_name_result;
+    }
+
+    int number_of_parameters_in_key = key_pointer->method_signature->param_count;
+    
+    int number_of_parameters_in_value = value_pointer->number_of_parameters;
+    
+    if(number_of_parameters_in_key != number_of_parameters_in_value){
+        return number_of_parameters_in_key < number_of_parameters_in_value ? -1 : 1;
+    }
+    
+    for(i = 0; i < number_of_parameters_in_key; i++) {
+        MonoTypeEnum key_param_type = key_pointer->method_signature->params[i]->type;
+        MonoTypeEnum value_param_type = value_pointer->parameters[i];
+    
+       if(key_param_type != value_param_type) {
+            return key_param_type < value_param_type ? 1 : -1;
+       }
+    };
+    
+    return 0;
 }
 
 typedef enum {
@@ -1525,7 +1574,9 @@ simd_version_name (guint32 version)
 static MonoInst*
 emit_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig, MonoInst **args, const SimdIntrinsc *intrinsics, guint32 size)
 {
-	const SimdIntrinsc * result = mono_binary_search (cmethod->name, intrinsics, size, sizeof (SimdIntrinsc), &simd_intrinsic_compare_by_name);
+	SimdIntrinscKey intrinscKey = { .method_name = cmethod->name, .method_signature = fsig };
+    
+	const SimdIntrinsc * result = mono_binary_search (&intrinscKey, intrinsics, size, sizeof (SimdIntrinsc), &simd_intrinsic_compare_by_name_and_signature);
     
 	if (!result) {
 		DEBUG (printf ("function doesn't have a simd intrinsic %s::%s/%d\n", cmethod->klass->name, cmethod->name, fsig->param_count));
@@ -1552,8 +1603,6 @@ emit_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsi
 		}
 		return NULL;
 	}
-    
-    printf("Emiting opcode %d", result->opcode);    
 
 	switch (result->simd_emit_mode) {
 	case SIMD_EMIT_BINARY:
@@ -1684,6 +1733,7 @@ MonoInst*
 mono_emit_simd_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig, MonoInst **args)
 {
 	const char *class_name;
+    int i;
     
 	if ((strcmp ("Mono.Simd", cmethod->klass->image->assembly->aname.name) ||
         strcmp ("Mono.Simd", cmethod->klass->name_space)) &&
@@ -1704,6 +1754,10 @@ mono_emit_simd_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSign
 		class_name = mono_class_from_mono_type (mono_method_signature (cmethod)->params [0])->name;
 	} else if (!cmethod->klass->simd_type)
 		return NULL;
+        
+    for(i = 0; i < fsig->param_count; i++) {
+        printf("Param %d: %x \n", i, fsig->params[i]->type);        
+    }
 
 	cfg->uses_simd_intrinsics = 1;
 	if (!strcmp ("Vector2d", class_name))
