@@ -148,6 +148,20 @@ typedef struct {
 	SimdIntrinscKey *key;
 } SimdIntrinsc;
 
+static const SimdIntrinsc vector_intrinsics[] = {
+	{ SN_Addition, OP_ADDPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_BitwiseAnd, OP_ANDPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_BitwiseOr, OP_ORPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_Division, OP_DIVPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_Equality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
+	{ SN_ExclusiveOr, OP_XORPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_Explicit, 0, SIMD_VERSION_SSE1, SIMD_EMIT_CAST }, 
+	{ SN_Inequality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
+	{ SN_Multiply, OP_MULPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	{ SN_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
+	
+};
+
 static const SimdIntrinsc vector2_intrinsics[] = {
 	{ SN_Max, OP_MAXPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_Min, OP_MINPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
@@ -155,7 +169,7 @@ static const SimdIntrinsc vector2_intrinsics[] = {
 	{ SN_op_Division, OP_DIVPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_op_Equality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_EQ },
 	{ SN_op_Inequality, OP_COMPPS, SIMD_VERSION_SSE1, SIMD_EMIT_EQUALITY, SIMD_COMP_NEQ },
-    { SN_op_Multiply, OP_MULSS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY, .key = &(SimdIntrinscKey){ .name = SN_op_Multiply, .parameters = { (MonoTypeEnum)0x11, (MonoTypeEnum)0xc }, .number_of_parameters = 2 } },
+	{ SN_op_Multiply, OP_MULSS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY, .key = &(SimdIntrinscKey){ .name = SN_op_Multiply, .parameters = { (MonoTypeEnum)0x11, (MonoTypeEnum)0xc }, .number_of_parameters = 2 } },
 	{ SN_op_Multiply, OP_MULPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY, .key = &(SimdIntrinscKey){ .name = SN_op_Multiply, .parameters = { (MonoTypeEnum)0x11, (MonoTypeEnum)0x11 }, .number_of_parameters = 2 } },
 	{ SN_op_Subtraction, OP_SUBPS, SIMD_VERSION_SSE1, SIMD_EMIT_BINARY },
 	{ SN_get_X, 0, SIMD_VERSION_SSE1, SIMD_EMIT_GETTER },
